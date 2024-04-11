@@ -20,10 +20,7 @@ Base stuff for the program
 
 const fetch = require('node-fetch');
 
-const readline = require('readline').createInterface({
-    input: process.stdin,
-    output: process.stdout
-});
+
 
 //fetching the data from the api using the base_url and then appending based on the search term
 fetch(base_url)
@@ -67,37 +64,76 @@ function showMenu() {
     console.log("4. Exit");
 
     //prompting the user for input
-    readline.question("Please select an option: ", (option) => {
-        //switch statement to determine which option the user selected
-        switch (option) {
+    
+    prompt((input) => {
+        //switch statement to determine what to do based on user input
+        switch (input) {
+            //case 1, search for a pokemon
             case '1':
-                prompt(searchPoke);
+
+                prompt(searchPoke());
                 break;
+
+            //case 2, search for an item
             case '2':
-                prompt(searchItem);
+                prompt(searchItem());
                 break;
+
+            //case 3, search for a move
             case '3':
-                prompt(searchMove);
+                prompt(searchMove());
                 break;
+
+            //case 4, exit the program
             case '4':
                 console.log("Goodbye!");
                 readline.close();
                 break;
+
+            //default case, invalid input
             default:
                 console.log("Invalid input, please try again.");
                 showMenu();
+                break;
         }
     });
-}
+};
 
 //prompt function is to prompt the user for input, handling readline functionality
 function prompt(cb) {
-   
+
+// Load the readline library
+const readline = require("readline");
+// Setup readline to listen on the stdin stream
+const rl = readline.createInterface(process.stdin, process.stdout);
+    readline.question("Please input an option: ", (input) => {
+        //callback function to handle the input
+        cb(input);
+    });
 }
 
 //searching for a pokemon
-function searchPoke() {
-    readline.question("Enter the name of the pokemon you would like to search for: ", (term) => {
+function searchPoke(term) {
+
+    //check if the term is empty
+        if (term === "") {
+            console.log("Invalid input, please try again.");
+            showMenu();
+        }
+
+        //fetch all pokemon and store in a list to verify that term is valid
+        fetch(base_url + 'pokemon/')
+            .then(response_allpoke => {
+                const all_pokemon = response_allpoke.json();
+            })
+        
+        //check if the term is valid
+        if(all_pokemon.includes(term) === false) {
+            console.log("Invalid input, please try again.");
+            showMenu();
+        }
+        
+        //if gotten here then its a valid term
         fetch(base_url + 'pokemon/' + term)
             .then(response => {
                 const response_holder = response.json();
@@ -105,12 +141,16 @@ function searchPoke() {
             })
             .then(data => {
                 const query_result = data.results;
-            })
-    })
-}
+            });
+        
+        //print the pokemon data
+        printPoke(query_result);
+    
+    
+};
 
-//printing the pokemon data
-function printPoke(json) {
+    //printing the pokemon data
+    function printPoke(json) {
     console.log("Name: " + json.name);
     console.log("Height: " + json.height);
     console.log("Weight: " + json.weight);
